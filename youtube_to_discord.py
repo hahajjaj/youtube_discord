@@ -20,12 +20,17 @@ bot = commands.Bot(command_prefix=get_prefix, intents=intents)
 async def on_ready():
     print(f'{bot.user} est connecté!')
     
+loop = False
+    
 queue = []
 
-def check_queue(ctx):
-    if len(queue) > 0:
-        url = queue.pop(0)
+def check_queue(ctx, url):
+    if loop:
         play_song(ctx, url)
+    elif len(queue) > 0:
+        next_url = queue.pop(0)
+        play_song(ctx, next_url)
+
 
 def play_song(ctx, url):
     voice_client = ctx.voice_client
@@ -43,8 +48,7 @@ def play_song(ctx, url):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         url2 = info['formats'][0]['url']
-        voice_client.play(discord.FFmpegPCMAudio('temp.mp3'), after=lambda e: check_queue(ctx))  # Joue le fichier téléchargé
-
+        voice_client.play(discord.FFmpegPCMAudio('temp.mp3'), after=lambda e: check_queue(ctx, url))
     
 @bot.command()
 async def stop(ctx):
@@ -59,6 +63,17 @@ async def stop(ctx):
         await ctx.send("Musique arrêtée.")
     else:
         await ctx.send("Aucune musique en cours de lecture.")
+
+@bot.command()
+async def loop(ctx):
+    global loop
+    loop = not loop  # Bascule l'état de la boucle
+
+    if loop:
+        await ctx.send("Boucle activée.")
+    else:
+        await ctx.send("Boucle désactivée.")
+
 
 @bot.event
 async def on_command_error(ctx, error):
