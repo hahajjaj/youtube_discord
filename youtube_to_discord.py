@@ -11,10 +11,7 @@ intents = discord.Intents.default()
 intents.members = True
 # bot = commands.Bot(command_prefix='>',intents=intents)
 
-def get_prefix(bot, message):
-    return commands.when_mentioned(bot, message)
-
-bot = commands.Bot(command_prefix=get_prefix, intents=intents)
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 loop = False
 queue = []
@@ -81,7 +78,7 @@ async def leave(ctx):
     await ctx.send("Déconnecté du canal vocal.")
 
 @bot.command()
-async def play(ctx, url):
+async def p(ctx, url):
     voice_client = ctx.voice_client
 
     if voice_client is None:
@@ -133,6 +130,21 @@ async def loop(ctx):
         await ctx.send("Boucle activée.")
     else:
         await ctx.send("Boucle désactivée.")
+        
+@bot.command()
+async def help(ctx):
+    embed = discord.Embed(title="Aide pour le Bot", description="Voici les commandes que vous pouvez utiliser:", color=0x00ff00)
+    
+    embed.add_field(name="`join`", value="Rejoindre le canal vocal de l'utilisateur.", inline=False)
+    embed.add_field(name="`leave`", value="Quitter le canal vocal actuel.", inline=False)
+    embed.add_field(name="`p <URL>`", value="Jouer une chanson à partir d'un lien YouTube.", inline=False)
+    embed.add_field(name="`skip`", value="Passer à la chanson suivante dans la file d'attente.", inline=False)
+    embed.add_field(name="`stop`", value="Arrêter la musique en cours.", inline=False)
+    embed.add_field(name="`loop`", value="Activer/désactiver la boucle de la chanson actuelle.", inline=False)
+    embed.add_field(name="`ping`", value="Tester la latence du bot.", inline=False)
+    
+    await ctx.send(embed=embed)
+
 
 @bot.event
 async def on_reaction_add(reaction, user):
@@ -162,3 +174,5 @@ async def on_command_error(ctx, error):
     await ctx.send(f'Une erreur est survenue: {error}')
 
 bot.run(TOKEN)
+
+#Modifie maintenant le script pour que les commandes fonctionnent avec le point d'exclamation, il n'y a plus besoin de taper le nom du bot.
