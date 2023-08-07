@@ -16,21 +16,20 @@ def get_prefix(bot, message):
 
 bot = commands.Bot(command_prefix=get_prefix, intents=intents)
 
-@bot.event
-async def on_ready():
-    print(f'{bot.user} est connecté!')
-    
 loop = False
-    
 queue = []
 
-def check_queue(ctx, url):
-    if loop:
-        play_song(ctx, url)
-    elif len(queue) > 0:
+async def send_control_buttons(ctx):
+    control_message = await ctx.send("Cliquez sur les réactions pour contrôler la lecture!")
+    reactions = ["⏯", "⏭", "🔁"]  # Play/Pause, Skip, Loop
+    for reaction in reactions:
+        await control_message.add_reaction(reaction)
+    return control_message
+
+def check_queue(ctx):
+    if len(queue) > 0:
         next_url = queue.pop(0)
         play_song(ctx, next_url)
-
 
 def play_song(ctx, url):
     voice_client = ctx.voice_client
@@ -48,36 +47,12 @@ def play_song(ctx, url):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         url2 = info['formats'][0]['url']
-        voice_client.play(discord.FFmpegPCMAudio('temp.mp3'), after=lambda e: check_queue(ctx, url))
-    
-@bot.command()
-async def stop(ctx):
-    voice_client = ctx.voice_client
-
-    if voice_client is None:
-        await ctx.send("Je ne suis pas dans un canal vocal.")
-        return
-
-    if voice_client.is_playing():
-        voice_client.stop()
-        await ctx.send("Musique arrêtée.")
-    else:
-        await ctx.send("Aucune musique en cours de lecture.")
-
-@bot.command()
-async def loop(ctx):
-    global loop
-    loop = not loop  # Bascule l'état de la boucle
-
-    if loop:
-        await ctx.send("Boucle activée.")
-    else:
-        await ctx.send("Boucle désactivée.")
-
+        voice_client.play(discord.FFmpegPCMAudio('temp.mp3'), after=lambda e: check_queue(ctx))
+        voice_client.source = discord.FFmpegPCMAudio('temp.mp3')
 
 @bot.event
-async def on_command_error(ctx, error):
-    await ctx.send(f'Une erreur est survenue: {error}')
+async def on_ready():
+    print(f'{bot.user} est connecté!')
 
 @bot.command()
 async def test(ctx):
@@ -105,7 +80,6 @@ async def leave(ctx):
     await ctx.voice_client.disconnect()
     await ctx.send("Déconnecté du canal vocal.")
 
-
 @bot.command()
 async def play(ctx, url):
     voice_client = ctx.voice_client
@@ -120,6 +94,7 @@ async def play(ctx, url):
     else:
         await ctx.send(f'Joue la chanson...')
         play_song(ctx, url)
+        await send_control_buttons(ctx)
 
 @bot.command()
 async def skip(ctx):
@@ -134,5 +109,56 @@ async def skip(ctx):
         await ctx.send("Chanson passée.")
     else:
         await ctx.send("Aucune musique en cours de lecture pour sauter.")
+
+@bot.command()
+async def stop(ctx):
+    voice_client = ctx.voice_client
+
+    if voice_client is None:
+        await ctx.send("Je ne suis pas dans un canal vocal.")
+        return
+
+    if voice_client.is_playing():
+        voice_client.stop()
+        await ctx.send("Musique arrêtée.")
+    else:
+        await ctx.send("Aucune musique en cours de lecture.")
+
+@bot.command()
+async def loop(ctx):
+    global loop
+    loop = not loop
+
+    if loop:
+        await ctx.send("Boucle activée.")
+    else:
+        await ctx.send("Boucle désactivée.")
+
+@bot.event
+async def on_reaction_add(reaction, user):
+    if user == bot.user:
+        return
+
+    ctx = await bot.get_context(reaction.message)
+
+    if reaction.emoji == "⏯":
+        if ctx.voice_client.is_playing():
+            ctx.voice_client.pause()
+        else:
+            ctx.voice_client.resume()
+
+    elif reaction.emoji == "⏭":
+        if ctx.voice_client.is_playing():
+            ctx.voice_client.stop()
+
+    elif reaction.emoji == "🔁":
+        global loop
+        loop = not loop
+
+    await reaction.message.remove_reaction(reaction.emoji, user)
+
+@bot.event
+async def on_command_error(ctx, error):
+    await ctx.send(f'Une erreur est survenue: {error}')
 
 bot.run(TOKEN)
