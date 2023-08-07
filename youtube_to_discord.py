@@ -1,12 +1,10 @@
 import discord
 from discord.ext import commands
 from dotenv import dotenv_values
-import openai
 import yt_dlp
 
 API_KEYS = dotenv_values(".env")
 
-openai.api_key = API_KEYS["API_KEY_OPENAI"]
 TOKEN = API_KEYS["API_KEY_DISCORD2"]
 
 intents = discord.Intents.default()
