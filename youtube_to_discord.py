@@ -132,7 +132,7 @@ async def loop(ctx):
         await ctx.send("Boucle désactivée.")
         
 @bot.command()
-async def help(ctx):
+async def h(ctx):
     embed = discord.Embed(title="Aide pour le Bot", description="Voici les commandes que vous pouvez utiliser:", color=0x00ff00)
     
     embed.add_field(name="`join`", value="Rejoindre le canal vocal de l'utilisateur.", inline=False)
