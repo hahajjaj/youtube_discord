@@ -19,6 +19,19 @@ bot = commands.Bot(command_prefix=get_prefix, intents=intents)
 @bot.event
 async def on_ready():
     print(f'{bot.user} est connecté!')
+    
+@bot.command()
+async def stop(ctx):
+    voice_client = ctx.voice_client
+
+    if voice_client is None:
+        await ctx.send("Je ne suis pas dans un canal vocal.")
+        return
+
+    if voice_client.is_playing():
+        voice_client.stop()
+    else:
+        await ctx.send("Aucune musique en cours de lecture.")
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -36,7 +49,6 @@ async def join(ctx):
 
     channel = ctx.author.voice.channel
     await channel.connect()
-    await ctx.send(f"Connecté à {channel}")
 
 @bot.command()
 async def ping(ctx):
