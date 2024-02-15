@@ -175,5 +175,3 @@ async def on_command_error(ctx, error):
     await ctx.send(f'Une erreur est survenue: {error}')
 
 bot.run(TOKEN)
-
-#Modifie maintenant le script pour que les commandes fonctionnent avec le point d'exclamation, il n'y a plus besoin de taper le nom du bot.
